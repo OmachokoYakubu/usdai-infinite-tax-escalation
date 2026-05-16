@@ -31,19 +31,19 @@ The `totalShares()` calculation includes pending redemptions:
 
 When redemptions are serviced via `serviceRedemptions()`, the `pending` shares are removed from the state. If the remaining `totalSupply()` and `bridgedSupply` are less than `LOCKED_SHARES` (e.g., after a large withdrawal), the vault reverts to the `initialDeposit` state.
 
-### Impact: Persistent Economic Tax
-Every time the vault's total shares drop below the threshold, the next depositor is forced to pay the `LOCKED_SHARES` tax again. This is not a one-time setup cost but a recurring "toll" that can be triggered multiple times throughout the vault's lifecycle.
+### Impact: Toll-Booth Sandwich Attack
+An external bad actor can weaponize this re-triggerable tax by **sandwiching victim deposits with redemption transactions**. By monitoring the mempool, an attacker can ensure `totalShares()` drops below the threshold exactly when a victim's deposit is processed. This forces the victim to pay the `LOCKED_SHARES` "toll" (~$1.00) unnecessarily. This can be repeated indefinitely to grief the protocol, destroy user trust, or extract value if the attacker has any influence over the tax-receiving treasury.
 
 ## Hans Pillars Analysis
 
 ### Impact Explanation (Hans Pillar 2: Impact)
 - **Technical Impact**: Breaks the vault's "initialization" invariant. The vault incorrectly cycles back into an uninitialized state after redemptions are serviced.
-- **Economic Impact**: **Persistent Value Extraction**. Users are repeatedly taxed `1e6` shares (~$1.00 at parity) every time the vault empties. This can lead to significant cumulative loss for retail users and protocol-level fund leakage.
+- **Economic Impact**: **Value Extraction & Griefing**. Victims are repeatedly forced to pay a "toll" every time the vault is manipulated into an empty state. At scale, this represents a significant economic drain on the user base.
 
 ### Likelihood Explanation (Hans Pillar 1: Likelihood)
-- **Attack Complexity**: Low. Triggers automatically through normal protocol usage (redemptions).
-- **Economic Feasibility**: High. The tax is extracted directly from user deposits without any cost to the "attacker" (in this case, the protocol's buggy logic).
-- **Likelihood Rating**: **High**. Large-scale redemptions are a standard operational phase for vaults, making this state transition highly probable.
+- **Attack Complexity**: Low. Requires basic mempool monitoring and a small amount of capital to influence the `totalShares` state.
+- **Economic Feasibility**: High. The "attacker" can trigger this for the cost of a few transactions while causing 1:1 economic damage to victims.
+- **Likelihood Rating**: **High**.
 
 ## Proof of Concept
 The following PoC demonstrates a scenario where Alice is taxed as the first depositor, then after she redeems and her shares are serviced, Charlie is taxed *again* as if he were the first depositor.

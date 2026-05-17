@@ -201,4 +201,4 @@ function convertToShares(uint256 assets) public view returns (uint256) {
 }
 ```
 
-Detailed remediation steps are provided in [REMEDIATION_STRATEGY.md](./REMEDIATION_STRATEGY.md).
+Detailed remediation steps are provided in [REMEDIATION_STRATEGY.md](https://github.com/OmachokoYakubu/usdai-infinite-tax-escalation/blob/main/REMEDIATION_STRATEGY.md).
